@@ -1,0 +1,17 @@
+[project]
+name = "collector-work24"
+version = "0.1.0"
+description = "Work24 job collector for Job Monitor"
+requires-python = ">=3.11"
+dependencies = [
+    "beautifulsoup4>=4.12,<5",
+    "pymysql>=1.1,<2",
+    "python-dotenv>=1.0,<2",
+    "requests>=2.32,<3",
+    "sqlalchemy>=2.0,<3",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8,<9",
+]
