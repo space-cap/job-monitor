@@ -1,4 +1,5 @@
 import os
+from datetime import date
 
 from dotenv import load_dotenv
 
@@ -17,6 +18,9 @@ WORK24_BASE_URL = os.getenv(
 )
 WORK24_PAGE_SIZE = int(os.getenv("WORK24_PAGE_SIZE", "50"))
 WORK24_REQUEST_TIMEOUT = int(os.getenv("WORK24_REQUEST_TIMEOUT", "20"))
+WORK24_INITIAL_START_DATE = date.fromisoformat(
+    os.getenv("WORK24_INITIAL_START_DATE", "2026-07-01")
+)
 
 
 def validate_database_config() -> None:
