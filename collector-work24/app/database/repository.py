@@ -75,7 +75,6 @@ EXISTS_SQL = text(
 
 def _params(job: Job, now: datetime) -> dict:
     return {
-        **job.__dict__ if hasattr(job, "__dict__") else {},
         "source_site": job.source_site,
         "provider_name": job.provider_name,
         "external_job_id": job.external_job_id,
@@ -111,10 +110,9 @@ def _params(job: Job, now: datetime) -> dict:
     }
 
 
-def save_jobs(engine: Engine, jobs: Iterable[Job]) -> tuple[int, int, int]:
+def save_jobs(engine: Engine, jobs: Iterable[Job]) -> tuple[int, int]:
     inserted = 0
     updated = 0
-    duplicate = 0
 
     with engine.begin() as connection:
         for job in jobs:
@@ -127,4 +125,4 @@ def save_jobs(engine: Engine, jobs: Iterable[Job]) -> tuple[int, int, int]:
                 connection.execute(INSERT_SQL, params)
                 inserted += 1
 
-    return inserted, updated, duplicate
+    return inserted, updated
