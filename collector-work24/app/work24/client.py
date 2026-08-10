@@ -1,8 +1,33 @@
-from typing import Dict
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 import requests
 
 from app.config import WORK24_BASE_URL, WORK24_PAGE_SIZE, WORK24_REQUEST_TIMEOUT
+
+# Work24 list URL supplied for the first-page collection.
+# The site uses pageIndex for the visible result page; the remaining
+# parameters are preserved exactly so the collector does not accidentally
+# change the search conditions.
+WORK24_FIRST_PAGE_URL = (
+    "https://www.work24.go.kr/wk/a/b/1200/retriveDtlEmpSrchList.do?"
+    "basicSetupYn=&careerTo=&keywordJobCd=&occupation=&seqNo=&cloDateEndtParam="
+    "&payGbn=&templateInfo=&rot2WorkYn=&shsyWorkSecd=&resultCnt=50"
+    "&keywordJobCont=N&cert=&moreButtonYn=&minPay=&codeDepth2Info=11000"
+    "&currentPageNo=2&eventNo=&mode=&isChkLocCall=&major=&resrDutyExcYn="
+    "&eodwYn=&sortField=DATE&staArea=&sortOrderBy=DESC&keyword="
+    "&termSearchGbn=&carrEssYns=&benefitSrchAndOr=O&disableEmpHopeGbn="
+    "&actServExcYn=&keywordStaAreaNm=N&maxPay=&emailApplyYn=&codeDepth1Info=11000"
+    "&keywordEtcYn=&regDateStdtParam=&publDutyExcYn=&keywordJobCdSeqNo="
+    "&viewType=&exJobsCd=&templateDepthNmInfo=&region=&employGbn=&empTpGbcd=1"
+    "&computerPreferential=&infaYn=&cloDateStdtParam=&siteClcd=all&searchMode=Y"
+    "&birthFromYY=&indArea=&careerTypes=&subEmpHopeYn=&tlmgYn=&academicGbn="
+    "&templateDepthNoInfo=&foriegn=&entryRoute=&mealOfferClcd=&basicSetupYnChk="
+    "&station=&holidayGbn=&srcKeyword=&academicGbnoEdu=noEdu&enterPriseGbn="
+    "&cloTermSearchGbn=&birthToYY=&keywordWantedTitle=N&stationNm=&benefitGbn="
+    "&keywordFlag=&notSrcKeyword=&essCertChk=&depth2SelCode=&keywordBusiNm=N"
+    "&preferentialGbn=&rot3WorkYn=&regDateEndtParam=&pfMatterPreferential="
+    "&pageIndex=1&termContractMmcnt=&careerFrom=&laborHrShortYn="
+)
 
 
 class Work24Client:
@@ -17,28 +42,32 @@ class Work24Client:
                 ),
                 "Accept-Language": "ko-KR,ko;q=0.9,en;q=0.8",
                 "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                "Referer": "https://www.work24.go.kr/",
             }
         )
 
     def fetch_list_page(self, page: int = 1) -> str:
-        params: Dict[str, str] = {
-            "searchMode": "Y",
-            "siteClcd": "all",
-            "empTpGbcd": "1",
-            "currentPageNo": str(page),
-            "pageIndex": str(page),
-            "resultCnt": str(WORK24_PAGE_SIZE),
-            "sortField": "DATE",
-            "sortOrderBy": "DESC",
-            "moreButtonYn": "Y",
-            "keywordJobCont": "N",
-            "academicGbnoEdu": "noEdu",
-            "benefitSrchAndOr": "O",
-        }
+        if page != 1:
+            raise ValueError("This first implementation intentionally supports page=1 only.")
+
+        base = WORK24_FIRST_PAGE_URL or WORK24_BASE_URL
+        parts = urlsplit(base)
+        query = dict(parse_qsl(parts.query, keep_blank_values=True))
+        query["resultCnt"] = str(WORK24_PAGE_SIZE)
+        query["pageIndex"] = "1"
+
+        url = urlunsplit(
+            (
+                parts.scheme,
+                parts.netloc,
+                parts.path,
+                urlencode(query),
+                parts.fragment,
+            )
+        )
 
         response = self.session.get(
-            WORK24_BASE_URL,
-            params=params,
+            url,
             timeout=WORK24_REQUEST_TIMEOUT,
         )
         response.raise_for_status()
