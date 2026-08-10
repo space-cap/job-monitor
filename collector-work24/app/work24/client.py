@@ -4,10 +4,8 @@ import requests
 
 from app.config import WORK24_BASE_URL, WORK24_PAGE_SIZE, WORK24_REQUEST_TIMEOUT
 
-# Work24 list URL supplied for the first-page collection.
-# The site uses pageIndex for the visible result page; the remaining
-# parameters are preserved exactly so the collector does not accidentally
-# change the search conditions.
+# Exact first-page URL supplied by the user. We preserve all search conditions
+# and change only pageIndex when collecting subsequent pages.
 WORK24_FIRST_PAGE_URL = (
     "https://www.work24.go.kr/wk/a/b/1200/retriveDtlEmpSrchList.do?"
     "basicSetupYn=&careerTo=&keywordJobCd=&occupation=&seqNo=&cloDateEndtParam="
@@ -47,14 +45,14 @@ class Work24Client:
         )
 
     def fetch_list_page(self, page: int = 1) -> str:
-        if page != 1:
-            raise ValueError("This first implementation intentionally supports page=1 only.")
+        if page < 1:
+            raise ValueError("page must be >= 1")
 
         base = WORK24_FIRST_PAGE_URL or WORK24_BASE_URL
         parts = urlsplit(base)
         query = dict(parse_qsl(parts.query, keep_blank_values=True))
         query["resultCnt"] = str(WORK24_PAGE_SIZE)
-        query["pageIndex"] = "1"
+        query["pageIndex"] = str(page)
 
         url = urlunsplit(
             (
@@ -66,10 +64,7 @@ class Work24Client:
             )
         )
 
-        response = self.session.get(
-            url,
-            timeout=WORK24_REQUEST_TIMEOUT,
-        )
+        response = self.session.get(url, timeout=WORK24_REQUEST_TIMEOUT)
         response.raise_for_status()
         response.encoding = response.apparent_encoding or "utf-8"
         return response.text
