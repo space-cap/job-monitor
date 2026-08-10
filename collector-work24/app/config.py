@@ -21,6 +21,13 @@ WORK24_REQUEST_TIMEOUT = int(os.getenv("WORK24_REQUEST_TIMEOUT", "20"))
 WORK24_INITIAL_START_DATE = date.fromisoformat(
     os.getenv("WORK24_INITIAL_START_DATE", "2026-07-01")
 )
+WORK24_REQUEST_DELAY_MIN = float(os.getenv("WORK24_REQUEST_DELAY_MIN", "1.5"))
+WORK24_REQUEST_DELAY_MAX = float(os.getenv("WORK24_REQUEST_DELAY_MAX", "3.0"))
+
+if WORK24_REQUEST_DELAY_MIN < 0 or WORK24_REQUEST_DELAY_MAX < 0:
+    raise ValueError("WORK24 request delays must be >= 0")
+if WORK24_REQUEST_DELAY_MIN > WORK24_REQUEST_DELAY_MAX:
+    raise ValueError("WORK24_REQUEST_DELAY_MIN must be <= WORK24_REQUEST_DELAY_MAX")
 
 
 def validate_database_config() -> None:
