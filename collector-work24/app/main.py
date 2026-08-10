@@ -1,6 +1,14 @@
+import random
+import time
+
 from sqlalchemy import text
 
-from app.config import WORK24_INITIAL_START_DATE, validate_database_config
+from app.config import (
+    WORK24_INITIAL_START_DATE,
+    WORK24_REQUEST_DELAY_MAX,
+    WORK24_REQUEST_DELAY_MIN,
+    validate_database_config,
+)
 from app.database.connection import create_db_engine
 from app.database.repository import save_jobs
 from app.work24.client import Work24Client
@@ -26,9 +34,9 @@ def main() -> None:
             print("No jobs parsed. Stopping collection.")
             break
 
-        # Work24 is sorted by registration date descending. Once the oldest
-        # job on a page is before the inclusive 2026-07-01 cutoff, jobs after
-        # that point are outside the initial collection range.
+        # Work24 is sorted by registration date descending. Once a job on the
+        # page is before the inclusive 2026-07-01 cutoff, jobs after that point
+        # are outside the initial collection range.
         page_jobs = []
         reached_cutoff = False
         for job in jobs:
@@ -58,6 +66,9 @@ def main() -> None:
             break
 
         page += 1
+        delay = random.uniform(WORK24_REQUEST_DELAY_MIN, WORK24_REQUEST_DELAY_MAX)
+        print(f"Waiting {delay:.2f}s before requesting page {page}...")
+        time.sleep(delay)
 
     with engine.connect() as connection:
         count = connection.execute(
